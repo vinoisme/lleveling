@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="水準測量">
+<title>水準測量系統 VINO</title>
+<style>
+:root{
+  --bg:#f5f7fa;--sf:#fff;--s2:#f0f2f5;--s3:#e4e8ed;
+  --bd:#dde1e7;--acc:#1a6fd4;--acc2:#e8f0fd;
+  --grn:#1a8a3c;--grn2:#e6f4ea;
+  --warn:#b45a00;--warn2:#fff3e0;
+  --red:#c62828;--red2:#fce8e8;
+  --pur:#6b21d4;--org:#c05a00;
+  --tx:#1a1d23;--tx2:#444c5c;--tx3:#7a8494;
+  --sh:0 1px 4px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;font-size:14px;}
+.hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;box-shadow:var(--sh);}
+.logo{font-size:16px;font-weight:700;color:var(--acc);}
+.logo small{font-size:10px;color:var(--tx3);font-weight:400;margin-left:5px;}
+.hdr-r{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap;}
+.sind{font-size:11px;color:var(--tx3);}
+.sind.ok{color:var(--grn);font-weight:600;}
+.modebar{background:var(--sf);border-bottom:1px solid var(--bd);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.modelabel{font-size:10px;color:var(--tx3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.modetog{display:flex;background:var(--s2);border-radius:8px;padding:3px;gap:2px;}
+.modebtn{padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--tx2);font-family:inherit;line-height:1.4;}
+.modebtn.on{background:var(--sf);color:var(--acc);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.tabbar{background:var(--sf);border-bottom:1px solid var(--bd);display:flex;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--tx3);cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;flex-shrink:0;}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:700;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pnl{display:none;padding:14px;}
+.pnl.on{display:block;}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:var(--sh);}
+.ctitle{font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px;display:flex;align-items:center;gap:7px;}
+.ctitle i{width:3px;height:13px;background:var(--acc);border-radius:2px;display:inline-block;flex-shrink:0;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.f1{display:flex;flex-direction:column;gap:4px;}
+.f1 label{font-size:11px;color:var(--tx2);font-weight:600;}
+.f1 input,.f1 select{background:var(--s2);border:1px solid var(--bd);color:var(--tx);padding:10px 11px;border-radius:8px;font-size:14px;font-family:inherit;outline:none;width:100%;-webkit-appearance:none;}
+.f1 input:focus,.f1 select:focus{border-color:var(--acc);background:#fff;}
+.imap{background:#1a2235;border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;}
+.imap canvas{display:block;width:100%;}
+.mbadge{position:absolute;top:8px;right:10px;font-size:10px;color:rgba(255,255,255,.55);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:6px;}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--bd);}
+table{width:100%;border-collapse:collapse;}
+table th{background:var(--s2);color:var(--tx2);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:9px 5px;text-align:center;border-bottom:1px solid var(--bd);white-space:nowrap;}
+table td{padding:1px 2px;border-bottom:1px solid var(--s3);text-align:center;vertical-align:middle;background:#fff;}
+table tr:last-child td{border-bottom:none;}
+table input{background:transparent;border:1px solid transparent;color:var(--tx);padding:8px 4px;border-radius:5px;font-size:13px;font-family:monospace;width:100%;text-align:center;outline:none;min-height:36px;}
+table input:focus{border-color:var(--acc);background:var(--acc2);}
+table select{background:transparent;border:1px solid transparent;color:var(--tx);padding:7px 2px;border-radius:5px;font-size:12px;font-family:inherit;outline:none;cursor:pointer;-webkit-appearance:none;font-weight:700;}
+table select:focus{border-color:var(--acc);background:var(--acc2);}
+.cv{font-family:monospace;font-size:12px;font-weight:700;padding:6px 4px;color:var(--grn);}
+.rn{color:var(--tx3);font-size:11px;font-family:monospace;}
+.delbtn{background:none;border:none;color:var(--tx3);font-size:15px;cursor:pointer;padding:4px 8px;border-radius:4px;}
+.delbtn:active{color:var(--red);}
+.addbtns{display:grid;gap:6px;margin-top:10px;}
+.addbtns.full{grid-template-columns:repeat(5,1fr);}
+.addbtns.simple{grid-template-columns:repeat(4,1fr);}
+.abn{border:1.5px solid;padding:10px 4px;border-radius:9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;text-align:center;background:var(--sf);}
+.abn small{display:block;font-size:9px;font-weight:400;margin-top:2px;}
+.abn:active{opacity:.7;}
+.sumgrid{display:grid;gap:8px;margin-top:10px;}
+.sg3{grid-template-columns:repeat(3,1fr);}
+.sg6{grid-template-columns:repeat(3,1fr);}
+.sbox{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px 8px;text-align:center;}
+.slbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.sv{font-size:17px;font-family:monospace;font-weight:700;color:var(--tx);}
+.sv.ok{color:var(--grn);}
+.sv.fail{color:var(--red);}
+.clbox{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:12px;margin-top:10px;}
+.clrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.cllbl{font-size:12px;color:var(--tx2);}
+.clval{font-family:monospace;font-size:14px;font-weight:700;}
+.btn{background:var(--s2);border:1px solid var(--bd);color:var(--tx);padding:10px 14px;border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;-webkit-appearance:none;}
+.btn:active{opacity:.7;}
+.btn.p{background:var(--acc);color:#fff;border-color:var(--acc);}
+.btn.g{background:var(--grn);color:#fff;border-color:var(--grn);}
+.btn.d{background:var(--red2);color:var(--red);border-color:#e57373;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.btn-full{width:100%;padding:13px;margin-top:8px;}
+.infobox{border-radius:9px;padding:10px 13px;font-size:12px;line-height:1.8;margin-bottom:10px;}
+.infobox.blue{background:var(--acc2);color:var(--acc);}
+.infobox.green{background:var(--grn2);color:var(--grn);}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;font-family:inherit;}
+.badge.ok{background:var(--grn2);color:var(--grn);}
+.badge.warn{background:var(--warn2);color:var(--warn);}
+.badge.fail{background:var(--red2);color:var(--red);}
+.planwrap{background:#1a2235;border-radius:12px;overflow:hidden;margin-bottom:10px;}
+#planCanvas{display:block;width:100%;}
+.legrow{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--tx2);margin:8px 0;}
+.leg{display:flex;align-items:center;gap:5px;}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.flist{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;}
+.fitem{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.fitem:active{background:var(--s3);}
+.fname{font-size:13px;font-weight:700;flex:1;}
+.fdate{font-size:11px;color:var(--tx3);}
+.fdel{background:none;border:none;color:var(--tx3);font-size:16px;cursor:pointer;padding:4px;}
+.es{text-align:center;padding:24px;color:var(--tx3);font-size:13px;}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.mbg.hide{display:none;}
+.modal{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.mtitle{font-size:16px;font-weight:700;margin-bottom:12px;}
+.mbtns{display:flex;gap:8px;margin-top:14px;}
+#fnInput{background:var(--s2);border:1.5px solid var(--acc);color:var(--tx);padding:12px;border-radius:9px;font-size:15px;font-family:inherit;outline:none;width:100%;margin-top:8px;}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#1a1d23;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(min-width:768px){.pnl{padding:18px 22px;}.sg6{grid-template-columns:repeat(6,1fr);}.addbtns.full{grid-template-columns:repeat(5,1fr);}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">📐 水準測量<small>VINO</small></div>
+  <div class="hdr-r">
+    <span class="sind" id="sInd">未存檔</span>
+    <button class="btn g" style="padding:7px 12px;font-size:12px;" onclick="qSave()">💾 存</button>
+    <button class="btn" style="padding:7px 12px;font-size:12px;" onclick="expCSV()">📊 CSV</button>
+    <button class="btn" style="padding:7px 12px;font-size:12px;" onclick="expJSON()">📤 備份</button>
+  </div>
+</div>
+
+<div class="modebar">
+  <span class="modelabel">模式</span>
+  <div class="modetog">
+    <button class="modebtn on" id="mb1" onclick="setMode('full')">📏 完整版<br><span style="font-size:9px;font-weight:400">距離＋閉合差</span></button>
+    <button class="modebtn" id="mb2" onclick="setMode('simple')">📋 簡易版<br><span style="font-size:9px;font-weight:400">僅高程</span></button>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tab on" onclick="sw('lev')">📋 測量</div>
+  <div class="tab" onclick="sw('plan')">🗺 平面圖</div>
+  <div class="tab" onclick="sw('rtk')">📡 RTK</div>
+  <div class="tab" onclick="sw('cmp')">🔄 比對</div>
+  <div class="tab" onclick="sw('proj')">🏗 工程</div>
+  <div class="tab" onclick="sw('save')">💾 存檔</div>
+  <div class="tab" onclick="sw('tut')">📚 教學</div>
+</div>
+
+<div class="content">
+
+<div id="pnl-lev" class="pnl on">
+  <div class="imap"><canvas id="iMap" height="160"></canvas><div class="mbadge" id="mBadge">新增測點後自動顯示</div></div>
+  <div class="card">
+    <div class="ctitle"><i></i>BM 基準點</div>
+    <div class="fg3">
+      <div class="f1"><label>BM 編號</label><input id="bm_id" placeholder="BM-001" oninput="mu();ri()"></div>
+      <div class="f1"><label>已知高程 (m)</label><input id="bm_e" placeholder="12.345" oninput="mu();rc();ri()"></div>
+      <div class="f1 full-only"><label>容許閉合差</label>
+        <select id="cl_tol" onchange="mu();rc()">
+          <option value="12">±12√K mm</option>
+          <option value="8">±8√K mm</option>
+          <option value="5">±5√K mm</option>
+          <option value="20">±20√K mm</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i></i>測量路線紀錄</div>
+    <div class="tscroll"><table><thead id="lHead"></thead><tbody id="lBody"></tbody></table></div>
+    <div class="addbtns full" id="addbtns">
+      <button class="abn" style="border-color:#1a6fd4;color:#1a6fd4;" onclick="aL('BS')">＋BS<small>後視</small></button>
+      <button class="abn" style="border-color:#1a8a3c;color:#1a8a3c;" onclick="aL('IS')">＋IS<small>中視</small></button>
+      <button class="abn" style="border-color:#c05a00;color:#c05a00;" onclick="aL('FS')">＋FS<small>前視</small></button>
+      <button class="abn" style="border-color:#c62828;color:#c62828;" onclick="aL('TP')">＋TP<small>轉點</small></button>
+      <button class="abn" style="border-color:#6b21d4;color:#6b21d4;" onclick="aL('BM')">＋BM<small>收測</small></button>
+    </div>
+    <div class="btn-row"><button class="btn d" onclick="clrL()">🗑 清除全部</button></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i></i>計算摘要</div>
+    <div class="sumgrid sg6" id="sumGrid"></div>
+    <div class="clbox" id="clBox"></div>
+  </div>
+</div>
+
+<div id="pnl-plan" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>測量路線平面圖</div>
+    <div class="planwrap"><canvas id="planCanvas" height="440"></canvas></div>
+    <div class="legrow">
+      <div class="leg"><div class="ld" style="background:#bc8cff"></div>BM</div>
+      <div class="leg"><div class="ld" style="background:#f85149"></div>TP轉點</div>
+      <div class="leg"><div class="ld" style="background:#58a6ff"></div>BS/FS</div>
+      <div class="leg"><div class="ld" style="background:#3fb950"></div>IS中視</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn p" onclick="dPlan()">🔄 重繪</button>
+      <button class="btn" onclick="dlPlan()">⬇ 下載PNG</button>
+    </div>
+  </div>
+</div>
+
+<div id="pnl-rtk" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>RTK 座標紀錄</div>
+    <div class="infobox green">✅ RTK正高已預扣大地起伏，直接輸入儀器顯示的<strong>正高H值</strong></div>
+    <div class="tscroll"><table><thead><tr>
+      <th>#</th><th>測點編號</th><th>E座標(m)</th><th>N座標(m)</th><th style="color:#1a8a3c">RTK正高H(m)</th><th>PDOP</th><th>備註</th><th></th>
+    </tr></thead><tbody id="rBody"></tbody></table></div>
+    <div class="btn-row">
+      <button class="btn p" onclick="aR()">＋ 新增</button>
+      <button class="btn g" onclick="aRgps()">📡 GPS</button>
+      <button class="btn d" onclick="clrR()">🗑 清除</button>
+    </div>
+  </div>
+</div>
+
+<div id="pnl-cmp" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>水準 vs RTK 比對</div>
+    <div class="infobox blue">測點編號相同時自動配對</div>
+    <div class="tscroll"><table><thead><tr>
+      <th>#</th><th>測點</th><th>水準H(m)</th><th>RTK H(m)</th><th>ΔH(mm)</th><th>容許差</th><th>判定</th>
+    </tr></thead><tbody id="cBody"></tbody></table></div>
+    <div class="btn-row"><button class="btn p" onclick="bCmp()">🔄 更新比對</button></div>
+  </div>
+  <div class="card" id="cStats" style="display:none">
+    <div class="ctitle"><i></i>統計</div>
+    <div class="sumgrid sg3">
+      <div class="sbox"><div class="slbl">點數</div><div class="sv" id="cn">—</div></div>
+      <div class="sbox"><div class="slbl">最大差</div><div class="sv" id="cmx">—</div></div>
+      <div class="sbox"><div class="slbl">RMSE</div><div class="sv" id="crms">—</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="pnl-proj" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>工程基本資料</div>
+    <div class="fg2">
+      <div class="f1"><label>工程名稱</label><input id="pn" placeholder="○○改善工程" oninput="mu()"></div>
+      <div class="f1"><label>合約編號</label><input id="pc" oninput="mu()"></div>
+      <div class="f1"><label>測量日期</label><input id="pd" type="date" oninput="mu()"></div>
+      <div class="f1"><label>天氣</label><select id="pw" onchange="mu()"><option>晴</option><option>多雲</option><option>陰</option><option>小雨</option></select></div>
+      <div class="f1"><label>測量人員</label><input id="ps" oninput="mu()"></div>
+      <div class="f1"><label>紀錄人員</label><input id="pr" oninput="mu()"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i></i>快速操作</div>
+    <button class="btn g btn-full" onclick="ldDemo()">📋 載入範例資料</button>
+    <button class="btn btn-full" onclick="nProj()">🆕 新建空白專案</button>
+  </div>
+</div>
+
+<div id="pnl-save" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>存檔管理</div>
+    <button class="btn g btn-full" onclick="showSM()">💾 另存新檔</button>
+    <button class="btn btn-full" onclick="expJSON()">📤 匯出 JSON 備份</button>
+    <button class="btn btn-full" onclick="document.getElementById('iFile').click()">📥 從 JSON 還原</button>
+    <input type="file" id="iFile" accept=".json" style="display:none" onchange="impJSON(event)">
+    <button class="btn btn-full" onclick="expCSV()">📊 匯出 CSV</button>
+    <button class="btn btn-full" onclick="window.print()">🖨 列印</button>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i></i>已存檔案</div>
+    <div id="fList" class="flist"></div>
+  </div>
+</div>
+
+<div id="pnl-tut" class="pnl">
+  <div class="card">
+    <div class="ctitle"><i></i>按鈕說明</div>
+    <div id="tutContent"></div>
+    <button class="btn g btn-full" style="margin-top:12px" onclick="ldDemo();sw('lev')">📋 載入範例資料試試看</button>
+  </div>
+</div>
+
+</div>
+
+<div class="mbg hide" id="sModal">
+  <div class="modal">
+    <div class="mtitle">💾 儲存專案</div>
+    <div style="font-size:13px;color:var(--tx2)">輸入檔案名稱：</div>
+    <input id="fnInput" placeholder="例：卑南上圳_0215" maxlength="50">
+    <div class="mbtns">
+      <button class="btn g" style="flex:1;justify-content:center" onclick="doSave()">✅ 儲存</button>
+      <button class="btn d" style="flex:1;justify-content:center" onclick="closeSM()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var LR=[],RR=[],lc=0,rtc=0,mode='full',uns=false,cf='';
+var TC={BS:'#1a6fd4',IS:'#1a8a3c',FS:'#c05a00',TP:'#c62828',BM:'#6b21d4'};
+var PNLS=['lev','plan','rtk','cmp','proj','save','tut'];
+
+function sw(n){
+  document.querySelectorAll('.pnl').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('pnl-'+n).classList.add('on');
+  document.querySelectorAll('.tab')[PNLS.indexOf(n)].classList.add('on');
+  if(n==='plan')setTimeout(dPlan,80);
+  if(n==='save')rFL();
+  if(n==='tut')buildTut();
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('mb1').className='modebtn'+(m==='full'?' on':'');
+  document.getElementById('mb2').className='modebtn'+(m==='simple'?' on':'');
+  document.querySelectorAll('.full-only').forEach(function(el){el.style.display=m==='full'?'':'none';});
+  document.getElementById('addbtns').className='addbtns '+(m==='full'?'full':'simple');
+  rL();rc();mu();
+}
+
+// ── LEVELING ──
+function g(id){var e=document.getElementById(id);return e?e.value:'';}
+function sv(id,v){var e=document.getElementById(id);if(e)e.value=v;}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function aL(t){LR.push({id:++lc,sid:'',type:t,bs:'',is:'',fs:'',dist:'',note:''});rL();rc();ri();mu();}
+function dL(id){LR=LR.filter(function(r){return r.id!==id;});rL();rc();ri();mu();}
+function clrL(){if(!confirm('清除全部水準資料？'))return;LR=[];lc=0;rL();rc();ri();mu();}
+function uL(id,field,val){
+  var r=LR.find(function(r){return r.id===id;});
+  if(r){r[field]=val;rc();ri();mu();}
+}
+
+function mkInput(val,type,step,placeholder,onChange){
+  var inp=document.createElement('input');
+  if(type)inp.type=type;
+  if(step)inp.step=step;
+  inp.value=val||'';
+  inp.placeholder=placeholder||'';
+  inp.onchange=onChange;
+  return inp;
+}
+function mkTd(child){var td=document.createElement('td');if(child)td.appendChild(child);return td;}
+function mkTdText(txt,cls){var td=document.createElement('td');td.textContent=txt;if(cls)td.className=cls;return td;}
+
+function rL(){
+  var cols=mode==='full'
+    ?['#','測點','類型','BS(m)','IS(m)','FS(m)','IH(m)','H(m)','距離(m)','備註','']
+    :['#','測點','類型','BS(m)','IS(m)','FS(m)','IH(m)','H(m)','備註',''];
+  var head=document.getElementById('lHead');
+  head.innerHTML='';
+  var tr0=document.createElement('tr');
+  cols.forEach(function(c){var th=document.createElement('th');th.textContent=c;tr0.appendChild(th);});
+  head.appendChild(tr0);
+
+  var tb=document.getElementById('lBody');tb.innerHTML='';
+  LR.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    // num
+    tr.appendChild(mkTdText(i+1,'rn'));
+    // sid
+    var inSid=mkInput(r.sid,'','','P-'+(i+1),function(){uL(r.id,'sid',this.value);});
+    tr.appendChild(mkTd(inSid));
+    // type select
+    var sel=document.createElement('select');
+    sel.style.color=TC[r.type]||'#1a1d23';sel.style.fontWeight='700';
+    ['BS','IS','FS','TP','BM'].forEach(function(t){
+      var opt=document.createElement('option');opt.value=t;opt.textContent=t;
+      opt.style.color=TC[t]||'#1a1d23';
+      if(r.type===t)opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.onchange=function(){uL(r.id,'type',this.value);};
+    tr.appendChild(mkTd(sel));
+    // bs is fs
+    ['bs','is','fs'].forEach(function(f){
+      var inp=mkInput(r[f],'number','0.001','—',function(){uL(r.id,f,this.value);});
+      tr.appendChild(mkTd(inp));
+    });
+    // IH H (computed)
+    var tdIH=mkTdText('—','cv');tdIH.id='ih_'+r.id;tr.appendChild(tdIH);
+    var tdH=mkTdText('—','cv');tdH.id='hh_'+r.id;tr.appendChild(tdH);
+    // dist (full only)
+    if(mode==='full'){
+      var inDist=mkInput(r.dist,'number','1','0',function(){uL(r.id,'dist',this.value);});
+      tr.appendChild(mkTd(inDist));
+    }
+    // note
+    var inNote=mkInput(r.note,'','','…',function(){uL(r.id,'note',this.value);});
+    tr.appendChild(mkTd(inNote));
+    // del
+    var btn=document.createElement('button');btn.className='delbtn';btn.textContent='✕';
+    btn.onclick=function(){dL(r.id);};
+    tr.appendChild(mkTd(btn));
+    tb.appendChild(tr);
+  });
+}
+
+function cH(){
+  var bE=parseFloat(g('bm_e'));
+  if(isNaN(bE))return{rows:[],sBS:0,sFS:0,totD:0,lastH:NaN};
+  var IH=0,H=bE,sBS=0,sFS=0,totD=0,lastH=bE,rows=[];
+  LR.forEach(function(r){
+    var bs=parseFloat(r.bs),fs=parseFloat(r.fs),is=parseFloat(r.is),d=parseFloat(r.dist)||0;
+    totD+=d;
+    if(r.type==='BS'&&!isNaN(bs)){IH=H+bs;sBS+=bs;}
+    if(r.type==='FS'&&!isNaN(fs)){H=IH-fs;sFS+=fs;lastH=H;}
+    if(r.type==='IS'&&!isNaN(is)){H=IH-is;}
+    if(r.type==='TP'){if(!isNaN(fs)){H=IH-fs;sFS+=fs;lastH=H;}if(!isNaN(bs)){IH=H+bs;sBS+=bs;}}
+    if(r.type==='BM'&&!isNaN(fs)){H=IH-fs;sFS+=fs;lastH=H;}
+    rows.push({id:r.id,IH:IH,H:H});
+  });
+  return{rows:rows,sBS:sBS,sFS:sFS,totD:totD,lastH:lastH};
+}
+
+function rc(){
+  var c=cH();var bE=parseFloat(g('bm_e'));if(isNaN(bE))return;
+  c.rows.forEach(function(r){
+    var ie=document.getElementById('ih_'+r.id);var he=document.getElementById('hh_'+r.id);
+    if(ie)ie.textContent=r.IH?r.IH.toFixed(3):'—';
+    if(he)he.textContent=isNaN(r.H)?'—':r.H.toFixed(3);
+  });
+  var sg=document.getElementById('sumGrid');
+  var cb=document.getElementById('clBox');
+  sg.innerHTML='';cb.innerHTML='';
+
+  function mkSbox(lbl,val,cls){
+    var box=document.createElement('div');box.className='sbox';
+    var l=document.createElement('div');l.className='slbl';l.textContent=lbl;
+    var v=document.createElement('div');v.className='sv'+(cls?' '+cls:'');v.textContent=val||'—';
+    box.appendChild(l);box.appendChild(v);sg.appendChild(box);
+  }
+  function mkClRow(lbl,val,col){
+    var row=document.createElement('div');row.className='clrow';
+    var l=document.createElement('span');l.className='cllbl';l.textContent=lbl;
+    var v=document.createElement('span');v.className='clval';v.textContent=val;
+    if(col)v.style.color=col;
+    row.appendChild(l);row.appendChild(v);cb.appendChild(row);
+  }
+
+  if(mode==='full'){
+    var K=c.totD/1000,tol=parseInt(g('cl_tol'))||12,allow=tol*Math.sqrt(K);
+    var pass=Math.abs((c.sBS-c.sFS)*1000)<=allow||K===0;
+    sg.className='sumgrid sg6';
+    mkSbox('∑ BS',c.sBS.toFixed(4));
+    mkSbox('∑ FS',c.sFS.toFixed(4));
+    mkSbox('∑BS-∑FS',(c.sBS-c.sFS).toFixed(4));
+    mkSbox('路線K(km)',K.toFixed(3));
+    mkSbox('閉合差(mm)',((c.sBS-c.sFS)*1000).toFixed(1)+'mm',K>0?(pass?'ok':'fail'):'');
+    mkSbox('容許值(mm)',K>0?allow.toFixed(1)+'mm':'—');
+    mkClRow('起點BM高程',bE.toFixed(3)+' m');
+    mkClRow('收測計算高程',isNaN(c.lastH)?'—':c.lastH.toFixed(3)+' m');
+    var div=document.createElement('div');div.style.cssText='height:1px;background:var(--bd);margin:8px 0';cb.appendChild(div);
+    mkClRow('閉合差判定',K>0?(pass?'✅ 合格':'❌ 超差'):'— 請填距離',K>0?(pass?'#1a8a3c':'#c62828'):'#7a8494');
+  } else {
+    sg.className='sumgrid sg3';
+    mkSbox('∑ BS',c.sBS.toFixed(4));
+    mkSbox('∑ FS',c.sFS.toFixed(4));
+    mkSbox('∑BS-∑FS',(c.sBS-c.sFS).toFixed(4));
+    mkClRow('起點BM高程',bE.toFixed(3)+' m');
+    mkClRow('收測計算高程',isNaN(c.lastH)?'—':c.lastH.toFixed(3)+' m');
+  }
+}
+
+// ── MAP ──
+function bN(){
+  var c=cH();var hM={};c.rows.forEach(function(r){hM[r.id]=r.H;});
+  return LR.map(function(r,i){return{idx:i+1,sid:r.sid||(r.type+'-'+(i+1)),type:r.type,H:hM[r.id],dist:r.dist};});
+}
+function layoutN(nodes,W,H,mg){
+  var main=nodes.filter(function(n){return n.type!=='IS';});
+  var cols=Math.min(main.length||1,Math.max(2,Math.ceil(Math.sqrt((main.length||1)*2))),5);
+  var rows=Math.ceil((main.length||1)/cols);
+  var cw=cols>1?(W-mg*2)/(cols-1):0,ch=rows>1?(H-mg*2)/(rows-1):0;
+  var mi=0,last=null;
+  nodes.forEach(function(n){
+    if(n.type==='IS'){if(last){n.x=last.x;n.y=last.y-55;}}
+    else{var col=mi%cols,row=Math.floor(mi/cols),c2=(row%2===0)?col:(cols-1-col);n.x=mg+c2*cw;n.y=mg+row*ch;last=n;mi++;}
+  });
+}
+function paintN(ctx,W,H,nodes,title,bE,compact){
+  var CC={BS:'#58a6ff',IS:'#3fb950',FS:'#58a6ff',TP:'#f85149',BM:'#bc8cff'};
+  ctx.fillStyle='#1a2235';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#232d42';ctx.lineWidth=1;
+  for(var x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  if(!nodes.length){ctx.fillStyle='#8896b0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('新增測點後自動顯示',W/2,H/2);return;}
+  for(var i=0;i<nodes.length-1;i++){
+    var a=nodes[i],b=nodes[i+1];if(!a.x||!b.x)continue;
+    var isIS=b.type==='IS'||a.type==='IS';
+    ctx.strokeStyle=isIS?'#3fb950':'#58a6ff';ctx.lineWidth=isIS?1.5:2.5;ctx.setLineDash(isIS?[5,4]:[]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);
+    if(!isIS){var ang=Math.atan2(b.y-a.y,b.x-a.x),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,s=7;
+      ctx.fillStyle='#58a6ff';ctx.beginPath();
+      ctx.moveTo(mx+Math.cos(ang)*s,my+Math.sin(ang)*s);
+      ctx.lineTo(mx+Math.cos(ang+2.4)*s*.6,my+Math.sin(ang+2.4)*s*.6);
+      ctx.lineTo(mx+Math.cos(ang-2.4)*s*.6,my+Math.sin(ang-2.4)*s*.6);
+      ctx.closePath();ctx.fill();}
+  }
+  nodes.forEach(function(n){
+    if(!n.x)return;
+    var color=CC[n.type]||'#58a6ff',nr=n.type==='BM'?11:n.type==='TP'?9:n.type==='IS'?6:8;
+    var gd=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,nr*2.5);
+    gd.addColorStop(0,color+'44');gd.addColorStop(1,color+'00');
+    ctx.fillStyle=gd;ctx.beginPath();ctx.arc(n.x,n.y,nr*2.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(n.x,n.y,nr,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+    ctx.strokeStyle='#1a2235';ctx.lineWidth=2;ctx.stroke();
+    if(n.type!=='IS'){ctx.fillStyle='#000';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.idx,n.x,n.y);}
+    ctx.textBaseline='alphabetic';
+    ctx.font='bold '+(compact?10:11)+'px sans-serif';ctx.fillStyle=color;ctx.textAlign='center';
+    ctx.fillText(n.sid,n.x,n.y-(nr+(compact?10:14)));
+    if(!isNaN(n.H)&&n.H!==undefined&&!compact){ctx.font='9px monospace';ctx.fillStyle='#e6edf3';ctx.fillText('H='+n.H.toFixed(3),n.x,n.y-(nr+25));}
+    if(!compact){ctx.font='9px sans-serif';ctx.fillStyle=color+'88';ctx.fillText('['+n.type+']',n.x,n.y+nr+12);}
+  });
+  if(!compact){
+    ctx.strokeStyle='#8896b0';ctx.lineWidth=1.5;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(W-32,41);ctx.lineTo(W-32,15);ctx.stroke();
+    ctx.fillStyle='#58a6ff';ctx.beginPath();ctx.moveTo(W-32,15);ctx.lineTo(W-37,25);ctx.lineTo(W-27,25);ctx.closePath();ctx.fill();
+    ctx.font='bold 10px sans-serif';ctx.fillStyle='#8896b0';ctx.textAlign='center';ctx.fillText('N',W-32,54);}
+  ctx.font='bold '+(compact?11:13)+'px sans-serif';ctx.fillStyle='#e6edf3';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillText(title||'水準測量路線',12,compact?16:22);
+  if(!compact&&bE){ctx.font='9px monospace';ctx.fillStyle='#8896b0';ctx.fillText('BM='+bE+'m  '+nodes.length+'站',12,36);}
+}
+function cvSetup(id,h){
+  var cv=document.getElementById(id);if(!cv)return null;
+  var dpr=window.devicePixelRatio||1,W=cv.parentElement.clientWidth||400;
+  cv.width=W*dpr;cv.height=h*dpr;cv.style.width=W+'px';cv.style.height=h+'px';
+  var ctx=cv.getContext('2d');ctx.scale(dpr,dpr);return{ctx:ctx,W:W,H:h};
+}
+function ri(){
+  var r=cvSetup('iMap',160);if(!r)return;
+  var nodes=bN();layoutN(nodes,r.W,r.H,40);
+  paintN(r.ctx,r.W,r.H,nodes,g('pn')||'測量路線',g('bm_e'),true);
+  document.getElementById('mBadge').textContent=nodes.length?('共'+nodes.length+'站'):' 新增測點後自動顯示';
+}
+function dPlan(){
+  var r=cvSetup('planCanvas',440);if(!r)return;
+  var nodes=bN();layoutN(nodes,r.W,r.H,65);
+  paintN(r.ctx,r.W,r.H,nodes,g('pn')||'水準測量路線',g('bm_e'),false);
+}
+function dlPlan(){dPlan();var cv=document.getElementById('planCanvas');var a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='平面圖_'+new Date().toISOString().slice(0,10)+'.png';a.click();toast('已下載');}
+
+// ── RTK ──
+function aR(){rtc++;RR.push({id:rtc,sid:'',E:'',N:'',H:'',pdop:'',note:''});rRtk();mu();}
+function dR(id){RR=RR.filter(function(r){return r.id!==id;});rRtk();mu();}
+function clrR(){if(!confirm('清除RTK？'))return;RR=[];rtc=0;rRtk();mu();}
+function uR(id,field,val){var r=RR.find(function(r){return r.id===id;});if(r){r[field]=val;mu();}}
+function aRgps(){if(!navigator.geolocation){toast('不支援GPS');return;}toast('取得中…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    rtc++;RR.push({id:rtc,sid:'GPS-'+rtc,E:pos.coords.longitude.toFixed(6),N:pos.coords.latitude.toFixed(6),H:'',pdop:(pos.coords.accuracy/5).toFixed(1),note:'WGS84'});
+    rRtk();mu();toast('已新增，請填正高H');},function(){toast('GPS失敗');},{enableHighAccuracy:true,timeout:10000});}
+
+function rRtk(){
+  var tb=document.getElementById('rBody');tb.innerHTML='';
+  RR.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.appendChild(mkTdText(i+1,'rn'));
+    var fields=[['sid','P-'+(i+1),''],['E','250000',''],['N','2700000',''],['H','正高(m)','color:#1a8a3c;font-weight:700'],['pdop','1.5',''],['note','…','']];
+    fields.forEach(function(f){
+      var inp=document.createElement('input');
+      inp.value=r[f[0]]||'';inp.placeholder=f[1];
+      if(f[2])inp.style.cssText=f[2];
+      inp.onchange=(function(fld){return function(){uR(r.id,fld,this.value);};})(f[0]);
+      tr.appendChild(mkTd(inp));
+    });
+    var btn=document.createElement('button');btn.className='delbtn';btn.textContent='✕';btn.onclick=function(){dR(r.id);};
+    tr.appendChild(mkTd(btn));
+    tb.appendChild(tr);
+  });
+}
+
+// ── COMPARE ──
+function getLevMap(){
+  var bE=parseFloat(g('bm_e'))||0,IH=0,H=bE,lm={};
+  LR.forEach(function(r){
+    var bs=parseFloat(r.bs),fs=parseFloat(r.fs),is=parseFloat(r.is);
+    if(r.type==='BS'&&!isNaN(bs)){IH=H+bs;}
+    if(r.type==='FS'&&!isNaN(fs)){H=IH-fs;}
+    if(r.type==='IS'&&!isNaN(is)){H=IH-is;}
+    if(r.type==='TP'){if(!isNaN(fs)){H=IH-fs;}if(!isNaN(bs)){IH=H+bs;}}
+    if(r.type==='BM'&&!isNaN(fs)){H=IH-fs;}
+    if(r.sid)lm[r.sid]=H;
+  });
+  return lm;
+}
+function bCmp(){
+  var lm=getLevMap();
+  var tb=document.getElementById('cBody');tb.innerHTML='';
+  var matched=RR.filter(function(r){return r.sid&&lm[r.sid]!==undefined;});
+  if(!matched.length){
+    var tr=document.createElement('tr');var td=document.createElement('td');td.colSpan=7;
+    td.style.cssText='padding:24px;color:#7a8494;font-size:13px;text-align:center';
+    td.textContent='無匹配測點 — 確認水準與RTK的測點編號完全相同';
+    tr.appendChild(td);tb.appendChild(tr);
+    document.getElementById('cStats').style.display='none';return;
+  }
+  var diffs=[];
+  matched.forEach(function(r,i){
+    var Hl=lm[r.sid],Hr=parseFloat(r.H),tr=document.createElement('tr');
+    function td(txt,style){var t=document.createElement('td');t.textContent=txt||'—';if(style)t.style.cssText=style;tr.appendChild(t);}
+    td(i+1);td(r.sid,'color:#1a6fd4;font-weight:700');
+    if(isNaN(Hl)||isNaN(Hr)){
+      td(isNaN(Hl)?'—':Hl.toFixed(3));td(isNaN(Hr)?'—':Hr.toFixed(3));
+      td('資料不足','color:#7a8494;font-size:11px');td('');td('');
+    } else {
+      var dH=(Hr-Hl)*1000,tol=30;diffs.push(dH);
+      var ok=Math.abs(dH)<=tol?'ok':Math.abs(dH)<=tol*2?'warn':'fail';
+      var col=ok==='ok'?'#1a8a3c':ok==='warn'?'#b45a00':'#c62828';
+      td(Hl.toFixed(3),'font-family:monospace');td(Hr.toFixed(3),'font-family:monospace');
+      td((dH>0?'+':'')+dH.toFixed(1),'font-family:monospace;font-weight:700;color:'+col);
+      td('±'+tol,'color:#7a8494');
+      var btd=document.createElement('td');var span=document.createElement('span');
+      span.className='badge '+ok;span.textContent=ok==='ok'?'合格':ok==='warn'?'注意':'超差';
+      btd.appendChild(span);tr.appendChild(btd);
+    }
+    tb.appendChild(tr);
+  });
+  if(diffs.length){
+    document.getElementById('cStats').style.display='block';
+    var mx=Math.max.apply(null,diffs.map(Math.abs));
+    var rmse=Math.sqrt(diffs.reduce(function(a,b){return a+b*b;},0)/diffs.length);
+    document.getElementById('cn').textContent=diffs.length;
+    document.getElementById('cmx').textContent=mx.toFixed(1)+'mm';
+    document.getElementById('cmx').className='sv '+(mx<=30?'ok':mx<=60?'':'fail');
+    document.getElementById('crms').textContent=rmse.toFixed(1)+'mm';
+  }
+}
+
+// ── SAVE ──
+function gS(){return{v:4,mode:mode,proj:{n:g('pn'),c:g('pc'),d:g('pd'),w:g('pw'),s:g('ps'),r:g('pr')},bm_id:g('bm_id'),bm_e:g('bm_e'),cl_tol:g('cl_tol'),LR:LR,RR:RR,lc:lc,rtc:rtc};}
+function applyS(s){
+  if(!s)return;var p=s.proj||{};
+  sv('pn',p.n||'');sv('pc',p.c||'');sv('pd',p.d||'');sv('pw',p.w||'晴');sv('ps',p.s||'');sv('pr',p.r||'');
+  sv('bm_id',s.bm_id||'');sv('bm_e',s.bm_e||'');sv('cl_tol',s.cl_tol||'12');
+  LR=s.LR||[];RR=s.RR||[];lc=s.lc||0;rtc=s.rtc||0;
+  if(s.mode)setMode(s.mode);else{rL();rc();rRtk();ri();}
+}
+function mu(){uns=true;document.getElementById('sInd').textContent='未存檔 ●';document.getElementById('sInd').className='sind';}
+function ms(n){uns=false;cf=n;document.getElementById('sInd').textContent='已存：'+n;document.getElementById('sInd').className='sind ok';}
+function gKeys(){var ks=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('vino4_'))ks.push(k);}return ks.sort();}
+function qSave(){if(!cf){showSM();return;}var s=gS();s.at=new Date().toISOString();localStorage.setItem('vino4_'+cf,JSON.stringify(s));ms(cf);toast('✅ 已存：'+cf);}
+function showSM(){document.getElementById('fnInput').value=cf||g('pn')||'水準測量';document.getElementById('sModal').classList.remove('hide');setTimeout(function(){document.getElementById('fnInput').focus();},100);}
+function closeSM(){document.getElementById('sModal').classList.add('hide');}
+function doSave(){var n=document.getElementById('fnInput').value.trim();if(!n){toast('請輸入檔名');return;}var s=gS();s.at=new Date().toISOString();localStorage.setItem('vino4_'+n,JSON.stringify(s));ms(n);closeSM();toast('✅ 已存：'+n);rFL();}
+function ldF(k){try{var s=JSON.parse(localStorage.getItem(k));applyS(s);ms(k.replace('vino4_',''));sw('lev');toast('📂 已載入');}catch(e){toast('載入失敗');}}
+function delF(k){if(!confirm('刪除？'))return;localStorage.removeItem(k);rFL();toast('已刪除');}
+function rFL(){
+  var ks=gKeys();var el=document.getElementById('fList');el.innerHTML='';
+  if(!ks.length){var d=document.createElement('div');d.className='es';d.textContent='尚無存檔';el.appendChild(d);return;}
+  ks.forEach(function(k){
+    var s={};try{s=JSON.parse(localStorage.getItem(k)||'{}');}catch(e){}
+    var n=k.replace('vino4_','');
+    var dt=s.at?new Date(s.at).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    var rows=(s.LR||[]).length;
+    var div=document.createElement('div');div.className='fitem';
+    var info=document.createElement('div');info.style.flex='1';
+    var nm=document.createElement('div');nm.className='fname';nm.textContent=n;
+    var dd=document.createElement('div');dd.className='fdate';dd.textContent=dt+' · '+rows+'筆';
+    info.appendChild(nm);info.appendChild(dd);
+    var btn=document.createElement('button');btn.className='fdel';btn.textContent='🗑';
+    btn.onclick=function(e){e.stopPropagation();delF(k);};
+    div.appendChild(info);div.appendChild(btn);
+    div.onclick=function(){ldF(k);};
+    el.appendChild(div);
+  });
+}
+setInterval(function(){if(uns&&cf)qSave();},30000);
+
+function expJSON(){var s=gS();s.exp=new Date().toISOString();var b=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='水準_'+(cf||g('pn')||'backup')+'_'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('JSON已匯出');}
+function impJSON(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var s=JSON.parse(ev.target.result);applyS(s);var n=f.name.replace('.json','');localStorage.setItem('vino4_'+n,JSON.stringify(s));ms(n);toast('✅ 已還原');rFL();}catch(e2){toast('格式錯誤');}};r.readAsText(f);e.target.value='';}
+function expCSV(){
+  var rows=['﻿工程名稱,'+g('pn'),'日期,'+g('pd'),'BM,'+g('bm_id')+'/'+g('bm_e')+'m','模式,'+(mode==='full'?'完整版':'簡易版'),''];
+  rows.push('【水準測量】');
+  rows.push('#,測點,類型,BS,IS,FS,'+(mode==='full'?'距離,':'')+'備註');
+  LR.forEach(function(r,i){
+    rows.push([i+1,r.sid,r.type,r.bs,r.is,r.fs].concat(mode==='full'?[r.dist,r.note]:[r.note]).join(','));
+  });
+  rows.push('');rows.push('【RTK座標】');rows.push('#,測點,E,N,RTK正高H,PDOP');
+  RR.forEach(function(r,i){rows.push([i+1,r.sid,r.E,r.N,r.H,r.pdop].join(','));});
+  var b=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='水準_'+(g('pn')||'測量')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();toast('CSV已匯出');
+}
+
+// ── DEMO ──
+function ldDemo(){
+  sv('pn','卑南上圳渠道改善工程第2期');sv('pc','1130215');sv('pd',new Date().toISOString().slice(0,10));
+  sv('ps','王大明');sv('pr','李小華');sv('bm_id','BM-001');sv('bm_e','12.345');sv('cl_tol','12');
+  LR=[];lc=0;
+  var demo=[
+    {sid:'BM-001',type:'BS',bs:'1.235',is:'',fs:'',dist:'0',note:'起測已知點'},
+    {sid:'IS-1',type:'IS',bs:'',is:'1.450',fs:'',dist:'20',note:'渠頂左岸'},
+    {sid:'IS-2',type:'IS',bs:'',is:'1.123',fs:'',dist:'20',note:'渠底中心'},
+    {sid:'IS-3',type:'IS',bs:'',is:'0.987',fs:'',dist:'20',note:'渠頂右岸'},
+    {sid:'TP-1',type:'TP',bs:'1.456',is:'',fs:'0.876',dist:'50',note:'第一轉點'},
+    {sid:'IS-4',type:'IS',bs:'',is:'1.234',fs:'',dist:'25',note:'地面高程'},
+    {sid:'TP-2',type:'TP',bs:'1.189',is:'',fs:'1.567',dist:'50',note:'第二轉點'},
+    {sid:'IS-5',type:'IS',bs:'',is:'1.056',fs:'',dist:'25',note:'渠底高程'},
+    {sid:'BM-001',type:'BM',bs:'',is:'',fs:'1.238',dist:'30',note:'收測回起點'}
+  ];
+  demo.forEach(function(r){LR.push(Object.assign({id:++lc},r));});
+  RR=[];rtc=0;
+  var rtk=[
+    {sid:'BM-001',E:'214523.456',N:'2639812.345',H:'12.345',pdop:'1.2',note:'核校'},
+    {sid:'IS-2',E:'214543.210',N:'2639815.678',H:'11.060',pdop:'1.5',note:'渠底'},
+    {sid:'IS-5',E:'214623.450',N:'2639825.234',H:'11.290',pdop:'1.4',note:'渠底'}
+  ];
+  rtk.forEach(function(r){RR.push(Object.assign({id:++rtc},r));});
+  rL();rc();rRtk();ri();cf='範例資料';mu();toast('📋 範例已載入！');
+}
+function nProj(){
+  if(uns&&!confirm('有未存資料，確定新建？'))return;
+  LR=[];RR=[];lc=0;rtc=0;cf='';
+  ['pn','pc','ps','pr','bm_id','bm_e'].forEach(function(id){sv(id,'');});
+  sv('pd',new Date().toISOString().slice(0,10));
+  rL();rc();rRtk();ri();mu();document.getElementById('sInd').textContent='新專案';toast('已建立空白專案');
+}
+
+// ── TUT ──
+function buildTut(){
+  var el=document.getElementById('tutContent');if(el.children.length)return;
+  var items=[
+    ['#1a6fd4','＋BS 後視','對準已知點（BM）讀數。IH = H_已知 + BS'],
+    ['#1a8a3c','＋IS 中視','讀中間測點（渠底、路面等）。H = IH − IS'],
+    ['#c05a00','＋FS 前視','讀前方測點。H = IH − FS'],
+    ['#c62828','＋TP 轉點','換站時用。先填FS再填BS。⚠ 轉點尺底絕對不能移動！'],
+    ['#6b21d4','＋BM 收測','路線最後回到已知點，只填FS欄位']
+  ];
+  items.forEach(function(item){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--s2);border-radius:9px;margin-bottom:8px;';
+    var tag=document.createElement('div');
+    tag.style.cssText='background:#fff;border:1.5px solid '+item[0]+';color:'+item[0]+';padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;flex-shrink:0;white-space:nowrap;';
+    tag.textContent=item[1];
+    var desc=document.createElement('div');
+    desc.style.cssText='font-size:12px;color:var(--tx2);line-height:1.7;padding-top:2px;';
+    desc.textContent=item[2];
+    row.appendChild(tag);row.appendChild(desc);el.appendChild(row);
+  });
+}
+
+// ── TOAST ──
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');setTimeout(function(){el.classList.remove('on');},2500);}
+
+// ── INIT ──
+(function(){
+  sv('pd',new Date().toISOString().slice(0,10));
+  rL();rc();
+  var ks=gKeys();ks.sort();
+  if(ks.length){try{var s=JSON.parse(localStorage.getItem(ks[ks.length-1]));applyS(s);ms(ks[ks.length-1].replace('vino4_',''));return;}catch(e){}}
+  ri();
+})();
+window.addEventListener('resize',function(){ri();if(document.getElementById('pnl-plan').classList.contains('on'))dPlan();});
+</script>
+</body>
+</html>
